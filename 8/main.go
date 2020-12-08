@@ -44,14 +44,25 @@ func main() {
 		addr++
 	}
 
-	// puzzle one
-	accu := 0
+	accu, addr := 0, 0
 	trace := make(map[int]bool)
-	addr = 0
+
+	addrInv := invertNext(stack, addr)
 	for {
+		// end
+		if addr >= len(stack) {
+			break
+		}
 		// second time
 		if trace[addr+1] {
-			break
+			accu, addr = 0, 0
+			trace = make(map[int]bool)
+
+			// re invert the last inverted
+			addrInv = invertNext(stack, addrInv)
+			// search next jmp, nop
+			addrInv++
+			addrInv = invertNext(stack, addrInv)
 		}
 
 		if stack[addr].oper == "jmp" {
@@ -65,5 +76,20 @@ func main() {
 		addr++
 		trace[addr] = true
 	}
-	fmt.Printf("result of puzzle one: %d\n", accu)
+	fmt.Printf("result of puzzle two: %d\n", accu)
+}
+
+func invertNext(s []instr, a int) (r int) {
+	for ; a < len(s); a++ {
+		if s[a].oper == "jmp" {
+			s[a].oper = "nop"
+			break
+		}
+		if s[a].oper == "nop" && s[a].arg != 0 {
+			s[a].oper = "jmp"
+			break
+		}
+	}
+	r = a
+	return
 }
