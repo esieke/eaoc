@@ -79,6 +79,8 @@ func main() {
 	r := NewRecord()
 	r.findParents("shiny gold", bags)
 	fmt.Printf("result puzzle one: %d\n", r.getSum())
+	fmt.Printf("result puzzle two: %d\n", countChilds("shiny gold", bags))
+
 }
 
 // NewRecord init Record struct
@@ -88,6 +90,7 @@ func NewRecord() *Record {
 	}
 }
 
+// Puzzle one
 func (r *Record) findParents(color string, bags []Bag) {
 	for _, bag := range bags {
 		for _, content := range bag.contents {
@@ -103,6 +106,26 @@ func (r *Record) getSum() (res int) {
 	for _, s := range r.state {
 		if s {
 			res++
+		}
+	}
+	return res
+}
+
+// Puzzle two
+func countChilds(color string, bags []Bag) (res int) {
+	for _, bag := range bags {
+		if bag.color == color {
+			for _, content := range bag.contents {
+				c := countChilds(content.color, bags)
+				if c != 0 {
+					res += content.n * c
+					res += content.n
+				} else {
+					res += content.n
+				}
+
+			}
+			break
 		}
 	}
 	return res
