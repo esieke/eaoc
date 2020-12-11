@@ -28,49 +28,52 @@ func main() {
 	}
 	deepCopy(mNext, m)
 
+	dirs := [][]int{
+		{1, 0},
+		{1, 1},
+		{0, 1},
+		{-1, 1},
+		{-1, 0},
+		{-1, -1},
+		{0, -1},
+		{1, -1},
+	}
 	for {
 		for y, xs := range mNext {
 			for x := range xs {
-				xb, yb := x-1, y-1
-				xe, ye := x+1, y+1
-				if xb < 0 {
-					xb = 0
-				}
-				if yb < 0 {
-					yb = 0
-				}
-				if xe >= len(xs)-1 {
-					xe = len(xs) - 1
-				}
-				if ye >= len(m)-1 {
-					ye = len(m) - 1
-				}
-				free, floor, occup := 0, 0, 0
-				for yi := yb; yi <= ye; yi++ {
-					for xi := xb; xi <= xe; xi++ {
-						if yi == y && xi == x {
-							continue
+				free, occup := 0, 0
+				for _, dir := range dirs {
+					xi, yi := x, y
+					for {
+						xi += dir[0]
+						yi += dir[1]
+						if xi < 0 ||
+							xi > len(xs)-1 ||
+							yi < 0 ||
+							yi > len(m)-1 {
+							break
 						}
-						switch m[yi][xi] {
-						case '.':
-							floor++
-						case 'L':
+						if m[yi][xi] == 'L' {
 							free++
-						case '#':
+							break
+						}
+						if m[yi][xi] == '#' {
 							occup++
+							break
 						}
 					}
 				}
+
 				if occup == 0 && m[y][x] == 'L' {
 					mNext[y][x] = '#'
 				}
-				if occup >= 4 && m[y][x] == '#' {
+				if occup >= 5 && m[y][x] == '#' {
 					mNext[y][x] = 'L'
 				}
 			}
 		}
 
-		// print(m, mNext)
+		//print(m, mNext)
 		if compare(mNext, m) {
 			break
 		}
