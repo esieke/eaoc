@@ -46,37 +46,30 @@ func main() {
 		posE: 0,
 		dir:  0,
 	}
+	wp := ferry{
+		posN: 1,
+		posE: 10,
+		dir:  0,
+	}
 	for _, v := range track {
 		switch v.action {
 		case 'N':
-			f.posN += v.value
+			wp.posN += v.value
 		case 'S':
-			f.posN -= v.value
+			wp.posN -= v.value
 		case 'E':
-			f.posE += v.value
+			wp.posE += v.value
 		case 'W':
-			f.posE -= v.value
+			wp.posE -= v.value
 		case 'L':
-			f.dir -= v.value
-			if f.dir < 0 {
-				f.dir = 360 - (f.dir*-1)%360
-			} else {
-				f.dir = f.dir % 360
-			}
+			deg := v.value % 360
+			trans(deg*-1, &wp)
 		case 'R':
-			f.dir += v.value
-			f.dir = f.dir % 360
+			deg := v.value % 360
+			trans(deg, &wp)
 		case 'F':
-			switch f.dir {
-			case 0:
-				f.posE += v.value
-			case 90:
-				f.posN -= v.value
-			case 180:
-				f.posE -= v.value
-			case 270:
-				f.posN += v.value
-			}
+			f.posE += wp.posE * v.value
+			f.posN += wp.posN * v.value
 		}
 	}
 
@@ -88,4 +81,26 @@ func main() {
 	}
 
 	fmt.Println(f.posE + f.posN)
+}
+
+// trans deg: 0, +/-90, +/-180, +/-270
+func trans(deg int, wp *ferry) {
+	if deg < 0 {
+		deg = 360 + deg
+	}
+	switch deg {
+	case 90:
+		e := wp.posE * -1
+		n := wp.posN
+		wp.posN = e
+		wp.posE = n
+	case 180:
+		wp.posE *= -1
+		wp.posN *= -1
+	case 270:
+		e := wp.posE
+		n := wp.posN * -1
+		wp.posE = n
+		wp.posN = e
+	}
 }
