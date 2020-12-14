@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -19,6 +20,7 @@ func main() {
 
 	var maskAnd uint64
 	var maskOr uint64
+	var floats []uint64
 	mem := make(map[uint64]uint64)
 	for s.Scan() {
 		l := s.Text()
@@ -30,14 +32,19 @@ func main() {
 		if ls[0] == "mask" {
 			lbs := []byte(ls[1])
 			maskAnd, maskOr = 0, 0
+			floats = make([]uint64, 0, 64)
 			for i := range lbs {
-				// maskAnd all X = 1 all 0 = 0 all 1 = 1
-				// maskOr  all X = 0 all 1 = 1 all 0 = 0
-				if lbs[35-i] == 'X' || lbs[35-i] == '1' {
+				// If the bitmask bit is 0, the corresponding memory address bit is unchanged.
+				// If the bitmask bit is 1, the corresponding memory address bit is overwritten with 1.
+				// If the bitmask bit is X, the corresponding memory address bit is floating.
+				if lbs[35-i] == '0' {
 					maskAnd |= 1 << uint64(i)
 				}
 				if lbs[35-i] == '1' {
 					maskOr |= 1 << uint64(i)
+				}
+				if lbs[35-i] == 'X' {
+					floats = append(floats, uint64(i))
 				}
 			}
 		} else {
@@ -57,8 +64,25 @@ func main() {
 				fmt.Printf("parsing mem value failed with error %v\n", err)
 				os.Exit(1)
 			}
-			mem[addr] = val & maskAnd
-			mem[addr] |= maskOr
+
+			addr &= maskAnd
+			addr |= maskOr
+			n := uint64(math.Pow(2.0, float64(len(floats))))
+			var i uint64
+			var resultAddr uint64
+			var maskFloat uint64
+			for i = 0; i < n; i++ {
+				resultAddr = addr
+				maskFloat = 0
+				for j := 0; j < len(floats); j++ {
+					if 1<<j&i > 0 {
+						maskFloat |= 1 << floats[j]
+					}
+				}
+				resultAddr |= maskFloat
+				// fmt.Printf("%b\n", mem[resultAddr])
+				mem[resultAddr] = val
+			}
 		}
 	}
 
