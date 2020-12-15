@@ -53,7 +53,7 @@ func main() {
 			val = 0
 		}
 
-		if ctr == 2020-1 {
+		if ctr == 30000000-1 {
 			fmt.Println(val)
 			return
 		}
