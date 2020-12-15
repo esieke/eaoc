@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -67,7 +66,8 @@ func main() {
 
 			addr &= maskAnd
 			addr |= maskOr
-			n := uint64(math.Pow(2.0, float64(len(floats))))
+			// 2^(len(floats))
+			n := uint64(1) << uint64(len(floats))
 			var i uint64
 			var resultAddr uint64
 			var maskFloat uint64

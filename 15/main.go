@@ -42,8 +42,6 @@ func main() {
 		}
 	}
 
-	fmt.Println(mem)
-
 	for {
 		val := 0
 		if len(mem[lastVal]) > 1 {
