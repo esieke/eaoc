@@ -17,9 +17,8 @@ type lim struct {
 type rule struct {
 	name string
 	lims []lim
+	id   int
 }
-
-// nearby tickets:
 
 func main() {
 	input, err := os.Open("input")
@@ -34,6 +33,7 @@ func main() {
 	nearbyTickets := make([][]int, 0, 1024)
 
 	state := 0
+	ruleID := 0
 	for s.Scan() {
 		l := s.Text()
 		if l == "your ticket:" {
@@ -46,7 +46,9 @@ func main() {
 		}
 
 		if state == 0 {
-			// class: 1-3 or 5-7
+			if l == "" {
+				continue
+			}
 			ls := strings.Split(l, ":")
 			if len(ls) != 2 {
 				fmt.Println("parse rules failed")
@@ -54,7 +56,9 @@ func main() {
 			}
 			r := rule{
 				name: ls[0],
+				id:   -1, //ruleID,
 			}
+			ruleID++
 			ls = strings.Split(ls[1], " ")
 			for _, raw := range ls {
 				if raw != "or" && raw != "" {
@@ -120,10 +124,21 @@ func main() {
 		}
 	}
 
-	result := 0
-	for _, nt := range nearbyTickets {
+	invalid := make([]int, 0, 1024)
+	for tid, nt := range nearbyTickets {
 		for _, val := range nt {
-			result += validate(val, rules)
+			if r := validate(val, rules); r > 0 {
+				invalid = append(invalid, tid)
+			}
+		}
+	}
+	validTickets := popAll(invalid, nearbyTickets)
+	findAndSetIds(validTickets, rules)
+
+	result := 1
+	for _, r := range rules {
+		if strings.Contains(r.name, "departure") {
+			result *= myTicket[r.id]
 		}
 	}
 	fmt.Println(result)
@@ -135,8 +150,57 @@ func validate(val int, rules []rule) int {
 			if val >= lim.min && val <= lim.max {
 				return 0
 			}
-
 		}
 	}
 	return val
+}
+
+func popAll(all []int, s [][]int) [][]int {
+	l := len(all) - 1
+	for i := range all {
+		s = append(s[:all[l-i]], s[all[l-i]+1:]...)
+	}
+	return s
+}
+
+func findAndSetIds(tickets [][]int, rules []rule) {
+	fountAllCtr := 0
+	for {
+		for rid := range rules {
+			founds := 0
+			foundTid := 0
+			if rules[rid].id != -1 {
+				continue
+			}
+			for tid := range tickets[0] {
+				valid := true
+				for _, ticket := range tickets {
+					if v := validate(ticket[tid], rules[rid:rid+1]); v > 0 {
+						valid = false
+						break
+					}
+				}
+				if valid {
+					setCtr := true
+					for _, r := range rules {
+						if r.id == tid {
+							setCtr = false
+							break
+						}
+					}
+					if setCtr {
+						founds++
+						foundTid = tid
+					}
+				}
+			}
+			if founds == 1 {
+				rules[rid].id = foundTid
+				fountAllCtr++
+			}
+		}
+		if fountAllCtr >= len(rules) {
+			break
+		}
+	}
 }
