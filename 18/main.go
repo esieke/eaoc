@@ -49,6 +49,7 @@ func (e *expression) calc() int {
 	num := 0
 	var state stateEnum
 	state = StateInit
+	partSum := []int{}
 	for {
 		t := e.getNextToken()
 		switch t.tokenType {
@@ -57,7 +58,8 @@ func (e *expression) calc() int {
 			case StateInit:
 				num = t.val.(int)
 			case StateMul:
-				num *= t.val.(int)
+				partSum = append(partSum, num)
+				num = t.val.(int)
 			case StateAdd:
 				num += t.val.(int)
 			default:
@@ -79,7 +81,8 @@ func (e *expression) calc() int {
 			case StateInit:
 				num = e.calc()
 			case StateMul:
-				num *= e.calc()
+				partSum = append(partSum, num)
+				num = e.calc()
 			case StateAdd:
 				num += e.calc()
 			default:
@@ -87,8 +90,12 @@ func (e *expression) calc() int {
 			}
 			state = StateWaitForOp
 		case TokenBE:
-			return num
+			fallthrough
 		case TokenEnd:
+			//num = 1
+			for _, n := range partSum {
+				num *= n
+			}
 			return num
 		}
 	}
