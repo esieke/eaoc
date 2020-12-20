@@ -93,35 +93,67 @@ func main() {
 		}
 	}
 
-	// do the work
-
-	// search relevant rules -> ;) all rules are required ;)
-	// rulesFilt := make(map[int]rule)
-	// filter(0, rules, rulesFilt)
-
 	// expand rules
 	expandRules(0, rules)
 
 	result := 0
+	len31 := len([]byte(rules[31].rules[0]))
+	len42 := len([]byte(rules[42].rules[0]))
+	if len31 != len42 {
+		panic("len of rules not equal")
+	}
 	for _, m := range msgs {
-		for _, r := range rules[0].rules {
-			if strings.Compare(m, r) == 0 {
+		mp := []string{}
+		ctr31 := 0
+		ctr42 := 0
+		state := 0
+		if len([]byte(m))%len31 == 0 {
+			for i := 0; i < len([]byte(m))/len31; i++ {
+				mp = append(mp, string([]byte(m)[i*len31:(i+1)*len31]))
+			}
+			for _, v := range mp {
+				valid := false
+				if state == 0 {
+					for _, r := range rules[42].rules {
+						if strings.Compare(v, r) == 0 {
+							ctr42++
+							valid = true
+							break
+						}
+					}
+					if !valid {
+						state = 1
+					}
+				}
+				if state == 1 {
+					if ctr42 < 1 {
+						state = 2
+					} else {
+						state = 3
+					}
+				}
+				if state == 3 {
+					for _, r := range rules[31].rules {
+						if strings.Compare(v, r) == 0 {
+							ctr31++
+							valid = true
+							break
+						}
+					}
+					if !valid {
+						state = 2
+					}
+				}
+				if state == 2 {
+					break
+				}
+			}
+			if state == 3 && ctr42 > ctr31 {
 				result++
-				break
 			}
 		}
 	}
-
 	fmt.Println(result)
-}
-
-func filter(id int, src, dst map[int]rule) {
-	for _, ids := range src[id].refs {
-		for _, i := range ids {
-			dst[i] = src[i]
-			filter(i, src, dst)
-		}
-	}
 }
 
 func expandRules(id int, r map[int]*rule) {

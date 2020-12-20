@@ -1,0 +1,12 @@
+###################
+&{31 [[14 17] [1 13]] [bbaba bbbaa babab babaa babba baaba baaab ababb abaab abbab abaaa abbaa abbba aabab aabaa aabba]}
+###################
+&{42 [[9 14] [10 1]] [babbb baabb bbaab bbabb bbbab bbbbb abbbb aabbb aaaab aaabb aaaba ababa bbbba aaaaa baaaa bbaaa]}
+###################
+
+42 42 42 31 42 31 42 42 42
+
+42 42 42 42 31 31
+42 42 42 42 42 31 31 31 31
+42 42 42 42 31
+42 42 42 42 42 31 31
