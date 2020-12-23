@@ -8,7 +8,7 @@ import (
 )
 
 type list struct {
-	val  byte
+	val  int
 	next *list
 }
 
@@ -35,7 +35,7 @@ func (l *list) push(new *list) {
 	}
 }
 
-func (l *list) find(val byte) (*list, bool) {
+func (l *list) find(val int) (*list, bool) {
 	this := l
 	for {
 		if l.val == val {
@@ -77,25 +77,31 @@ func main() {
 	s := bufio.NewScanner(input)
 
 	cups := &list{}
+	nextCup := cups
 	init := true
 	for s.Scan() {
 		l := []byte(s.Text())
-		nextCup := cups
 		for _, b := range l {
 			if init {
-				nextCup.val = b - 48
+				nextCup.val = int(b) - 48
 				nextCup.next = nextCup
 				init = false
 			} else {
 				nextCup.push(&list{
-					val: b - 48,
+					val: int(b) - 48,
 				})
 			}
 			nextCup = nextCup.next
 		}
 	}
+	for i := 10; i <= 1000000; i++ {
+		nextCup.push(&list{
+			val: i,
+		})
+		nextCup = nextCup.next
+	}
 
-	nMoves := 100
+	nMoves := 10000000
 	for i := 0; i < nMoves; i++ {
 		pickUps := cups.pop(3)
 		destVal := cups.val - 1
@@ -118,8 +124,15 @@ func main() {
 		destList.push(pickUps)
 		cups = cups.next
 
+		if i%1000 == 0 {
+			fmt.Println(i)
+		}
+
 		//cups.offset(9 - (i+1)%9).print()
 	}
 	result, _ := cups.find(1)
-	result.pop(8).print()
+	result.print()
+	r1 := result.pop(1).val
+	r2 := result.pop(1).val
+	fmt.Println(r1 * r2)
 }
