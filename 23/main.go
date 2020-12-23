@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 )
 
 type list struct {
@@ -77,30 +78,39 @@ func main() {
 	s := bufio.NewScanner(input)
 
 	cups := &list{}
+	cupsSlice := make([]*list, 1000000)
 	nextCup := cups
 	init := true
+	line := 0
 	for s.Scan() {
 		l := []byte(s.Text())
 		for _, b := range l {
 			if init {
+				cupsSlice[line] = cups
 				nextCup.val = int(b) - 48
 				nextCup.next = nextCup
 				init = false
 			} else {
-				nextCup.push(&list{
+				cupsSlice[line] = &list{
 					val: int(b) - 48,
-				})
+				}
+				nextCup.push(cupsSlice[line])
 			}
 			nextCup = nextCup.next
+			line++
 		}
 	}
 	for i := 10; i <= 1000000; i++ {
-		nextCup.push(&list{
+		cupsSlice[i-1] = &list{
 			val: i,
-		})
+		}
+		nextCup.push(cupsSlice[i-1])
 		nextCup = nextCup.next
 	}
 
+	sort.SliceStable(cupsSlice, func(i, j int) bool {
+		return cupsSlice[i].val < cupsSlice[j].val
+	})
 	nMoves := 10000000
 	for i := 0; i < nMoves; i++ {
 		pickUps := cups.pop(3)
@@ -108,7 +118,7 @@ func main() {
 
 		for {
 			if destVal < 1 {
-				destVal = 9
+				destVal = 1000000
 			}
 			_, found := pickUps.find(destVal)
 			if !found {
@@ -117,22 +127,21 @@ func main() {
 			destVal--
 		}
 
-		destList, found := cups.find(destVal)
-		if !found {
+		i := sort.Search(len(cupsSlice)-1, func(i int) bool { return cupsSlice[i].val >= destVal })
+		if !(i < len(cupsSlice) && cupsSlice[i].val == destVal) {
 			panic("value must be in list")
 		}
-		destList.push(pickUps)
+		cupsSlice[i].push(pickUps)
 		cups = cups.next
-
-		if i%1000 == 0 {
-			fmt.Println(i)
-		}
-
 		//cups.offset(9 - (i+1)%9).print()
 	}
-	result, _ := cups.find(1)
-	result.print()
-	r1 := result.pop(1).val
-	r2 := result.pop(1).val
+
+	i := sort.Search(len(cupsSlice)-1, func(i int) bool { return cupsSlice[i].val >= 1 })
+	if !(i < len(cupsSlice) && cupsSlice[i].val == 1) {
+		panic("value must be in list")
+	}
+
+	r1 := cupsSlice[i].pop(1).val
+	r2 := cupsSlice[i].pop(1).val
 	fmt.Println(r1 * r2)
 }
