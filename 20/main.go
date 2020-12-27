@@ -12,23 +12,16 @@ import (
 type borderEnum int
 
 const (
-	BorderTop          borderEnum = iota
-	BorderLeft         borderEnum = iota
-	BorderBottom       borderEnum = iota
-	BorderRight        borderEnum = iota
-	BorderFlipedTop    borderEnum = iota // inverse BorderBottom
-	BorderFlipedLeft   borderEnum = iota
-	BorderFlipedBottom borderEnum = iota // inverse BorderTop
-	BorderFlipedRight  borderEnum = iota
-	BorderNum          borderEnum = iota // Number of borders
+	BorderTop    borderEnum = iota
+	BorderLeft   borderEnum = iota
+	BorderBottom borderEnum = iota
+	BorderRight  borderEnum = iota
 )
 
 type tile struct {
-	id      int
-	rotCW   int
-	dim     int // 10 x 10
-	borders []uint16
-	raw     []string
+	id  int
+	dim int // 10 x 10 dim = 10
+	raw [][]byte
 }
 
 func main() {
@@ -39,7 +32,6 @@ func main() {
 	defer input.Close()
 	s := bufio.NewScanner(input)
 
-	tileLine := 0
 	tiles := []*tile{}
 	var t *tile
 	for s.Scan() {
@@ -55,84 +47,242 @@ func main() {
 				fmt.Printf("parse tile id failed with error %v\n", err)
 				continue
 			}
-			tileLine = 0
-			t = newTile(id, 10)
+			t = newTile(id)
+			tiles = append(tiles, t)
 			continue
 		}
-		// fill borders
-		lb := []byte(l)
-		if tileLine == 0 {
-			for i, b := range lb {
-				if b == '#' {
-					t.borders[BorderTop] |= 1 << i
-					t.borders[BorderFlipedBottom] |= 1 << (t.dim - 1 - i)
+		// fill
+		t.addRow([]byte(l))
+	}
+
+	// tiles map
+	mapTiles := make([][]*tile, 0, 128)
+
+	// search top/left corner
+	t = tiles[0]
+	var next *tile
+	dir := BorderLeft
+	for {
+		next = t.getNext(dir, tiles)
+		if next != nil {
+			t = next
+		}
+		if next == nil && dir == BorderTop {
+			break
+		}
+		if next == nil && dir == BorderLeft {
+			dir = BorderTop
+		}
+	}
+
+	// fill first column
+	mapTilesR := make([]*tile, 0, 128)
+	mapTilesR = append(mapTilesR, t)
+	mapTiles = append(mapTiles, mapTilesR)
+	dir = BorderBottom
+	for {
+		next = t.getNext(dir, tiles)
+		if next != nil {
+			t = next
+			mapTilesR = make([]*tile, 0, 128)
+			mapTilesR = append(mapTilesR, t)
+			mapTiles = append(mapTiles, mapTilesR)
+		}
+		if next == nil {
+			break
+		}
+	}
+
+	// fill rows
+	dir = BorderRight
+	for r := range mapTiles {
+		t = mapTiles[r][0]
+		for {
+			next = t.getNext(dir, tiles)
+			if next != nil {
+				t = next
+				mapTiles[r] = append(mapTiles[r], t)
+			}
+			if next == nil {
+				break
+			}
+		}
+	}
+
+	if len(mapTiles) != len(mapTiles[0]) {
+		panic("expect square")
+	}
+
+	picture := newTile(0)
+	picture.dim = len(mapTiles) * (mapTiles[0][0].dim - 2)
+	picture.initRaw()
+	for r := range mapTiles {
+		for c := range mapTiles[r] {
+			dim := mapTiles[r][c].dim - 2
+			for rt := 1; rt <= dim; rt++ {
+				for ct := 1; ct <= dim; ct++ {
+					rp := (r * dim) + rt - 1
+					cp := (c * dim) + ct - 1
+					picture.raw[rp][cp] = mapTiles[r][c].raw[rt][ct]
 				}
 			}
 		}
-		if tileLine == t.dim-1 {
-			for i, b := range lb {
-				if b == '#' {
-					t.borders[BorderBottom] |= 1 << (t.dim - 1 - i)
-					t.borders[BorderFlipedTop] |= 1 << i
-				}
-			}
-		}
-		if lb[0] == '#' {
-			t.borders[BorderLeft] |= 1 << (t.dim - 1 - tileLine)
-			t.borders[BorderFlipedLeft] |= 1 << tileLine
-		}
-		if lb[t.dim-1] == '#' {
-			t.borders[BorderRight] |= 1 << tileLine
-			t.borders[BorderFlipedRight] |= 1 << (t.dim - 1 - tileLine)
-		}
-
-		// fill raw
-		t.raw[tileLine] = l
-
-		if tileLine == t.dim-1 {
-			tiles = append(tiles, t)
-		}
-
-		tileLine++
-	}
-	// for _, v := range t.borders {
-	// 	fmt.Printf("%010b\n", v)
-	// }
-
-	result := 1
-	for _, t := range tiles {
-		num := findNumBorders(t, tiles)
-		if num == 2 {
-			result *= t.id
-			fmt.Println(t.id)
-		}
-
 	}
 
-	fmt.Println(result)
-}
-
-func newTile(id, dim int) *tile {
-	borders := make([]uint16, int(BorderNum))
-	raw := make([]string, dim)
-	return &tile{
-		id:      id,
-		dim:     dim,
-		borders: borders,
-		raw:     raw,
-	}
-}
-
-func findNumBorders(t *tile, ts []*tile) int {
-	ret := 0
-	for _, tin := range ts {
-		if tin.id != t.id {
-			for i := 0; i < 4; i++ {
-				for _, b := range tin.borders {
-					if t.borders[i] == b {
-						ret++
+	seaMonsters := 0
+	roughness := 0
+	for i := 0; i < 2; i++ {
+		for k := 0; k < 4; k++ {
+			m := picture.searchSeaMonsters()
+			if m > seaMonsters {
+				seaMonsters = m
+				for r := range picture.raw {
+					for c := range picture.raw[r] {
+						if picture.raw[r][c] == '#' {
+							roughness++
+						}
 					}
 				}
+				roughness -= (seaMonsters * 15)
+			}
+			picture.rot()
+		}
+		picture.flip()
+	}
+	fmt.Println(roughness)
+}
+
+func newTile(id int) *tile {
+	return &tile{
+		id: id,
+	}
+}
+
+func (t *tile) addRow(r []byte) {
+	if len(t.raw) == 0 {
+		t.dim = len(r)
+		t.raw = make([][]byte, 0, 128)
+	}
+	t.raw = append(t.raw, r)
+}
+
+func (t *tile) initRaw() {
+	t.raw = make([][]byte, t.dim)
+	for r := range t.raw {
+		t.raw[r] = make([]byte, t.dim)
+	}
+}
+
+func (t *tile) copy() *tile {
+	raw := make([][]byte, t.dim)
+	for r := range t.raw {
+		raw[r] = make([]byte, t.dim)
+		for c := range t.raw[r] {
+			raw[r][c] = t.raw[r][c]
+		}
+	}
+	return &tile{
+		id:  t.id,
+		dim: t.dim,
+		raw: raw,
+	}
+}
+
+func (t *tile) rot() {
+	buf := t.copy()
+	for r := range t.raw {
+		for c := range t.raw[r] {
+			t.raw[c][buf.dim-1-r] = buf.raw[r][c]
+		}
+	}
+}
+
+func (t *tile) flip() {
+	buf := t.copy()
+	for r := range t.raw {
+		for c := range t.raw[r] {
+			t.raw[r][buf.dim-1-c] = buf.raw[r][c]
+		}
+	}
+}
+
+func (t *tile) getBorder(b borderEnum) string {
+	border := make([]byte, t.dim)
+
+	switch b {
+	case BorderTop:
+		for i := 0; i < t.dim; i++ {
+			border[i] = t.raw[0][i]
+		}
+	case BorderLeft:
+		for i := 0; i < t.dim; i++ {
+			border[i] = t.raw[i][0]
+		}
+	case BorderBottom:
+		for i := 0; i < t.dim; i++ {
+			border[i] = t.raw[t.dim-1][i]
+		}
+	case BorderRight:
+		for i := 0; i < t.dim; i++ {
+			border[i] = t.raw[i][t.dim-1]
+		}
+	}
+	return string(border)
+}
+
+func (t *tile) print() {
+	for _, row := range t.raw {
+		fmt.Println(string(row))
+	}
+}
+
+func (t *tile) getNext(b borderEnum, tiles []*tile) *tile {
+	tBorder := string(t.getBorder(b))
+
+	for ti := range tiles {
+		if t.id != tiles[ti].id {
+			for i := 0; i < 2; i++ {
+				for k := 0; k < 4; k++ {
+					tCompBorder := tiles[ti].getBorder((b + 2) % 4)
+					if tBorder == tCompBorder {
+						return tiles[ti]
+					}
+					tiles[ti].rot()
+				}
+				tiles[ti].flip()
+			}
+		}
+	}
+	return nil
+}
+
+func (t *tile) searchSeaMonsters() int {
+	//                   #
+	// #    ##    ##    ###
+	//  #  #  #  #  #  #
+
+	// line 0 to line len()-3 column 18 to len()-2
+	ret := 0
+	for c := 0; c < t.dim-3; c++ {
+		for r := 18; r < t.dim-2; r++ {
+			if t.raw[c][r] == '#' &&
+				// next row
+				t.raw[c+1][r-18] == '#' &&
+				t.raw[c+1][r-13] == '#' &&
+				t.raw[c+1][r-12] == '#' &&
+				t.raw[c+1][r-7] == '#' &&
+				t.raw[c+1][r-6] == '#' &&
+				t.raw[c+1][r-1] == '#' &&
+				t.raw[c+1][r-0] == '#' &&
+				t.raw[c+1][r+1] == '#' &&
+				// next row
+				t.raw[c+2][r-17] == '#' &&
+				t.raw[c+2][r-14] == '#' &&
+				t.raw[c+2][r-11] == '#' &&
+				t.raw[c+2][r-8] == '#' &&
+				t.raw[c+2][r-5] == '#' &&
+				t.raw[c+2][r-2] == '#' {
+				ret++
 			}
 		}
 	}
