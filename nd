@@ -1,5 +1,34 @@
 #!/bin/bash
 
 mkdir $1
-cp -r X/.vscode/ $1/
 cp -r X/* $1/
+
+# cmake lists file
+echo "add_executable($1 main.c)" > $1/CMakeLists.txt
+echo "" >> $1/CMakeLists.txt
+echo "link_libraries(" >> $1/CMakeLists.txt
+echo "    $1" >> $1/CMakeLists.txt
+echo ")" >> $1/CMakeLists.txt
+
+# main function
+echo "int main()"  >> $1/main.c
+echo "{"  >> $1/main.c
+echo "	FILE *f;"  >> $1/main.c
+echo "	int l = aocOpen(\"../../$1/input\", &f);"  >> $1/main.c
+echo "	if (l < 0)"  >> $1/main.c
+echo "	{"  >> $1/main.c
+echo "		printf(\"open input file failed with error\n\");"  >> $1/main.c
+echo "		return 1;"  >> $1/main.c
+echo "	}"  >> $1/main.c
+echo ""  >> $1/main.c
+echo "	char in[l][STR_LEN];"  >> $1/main.c
+echo "	for (int i; i < l; i++)"  >> $1/main.c
+echo "	{"  >> $1/main.c
+echo "		int r = fscanf(f, \"%499s\", in[i]);"  >> $1/main.c
+echo "		if (r == EOF && errno > 0)"  >> $1/main.c
+echo "			return -2;"  >> $1/main.c
+echo "		printf(\"%s\n\", in[i]);"  >> $1/main.c
+echo "	}"  >> $1/main.c
+echo "	return 0;"  >> $1/main.c
+echo "}"  >> $1/main.c
+
