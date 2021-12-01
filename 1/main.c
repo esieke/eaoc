@@ -48,9 +48,9 @@ int main()
 			return -2;
 	}
 
-	for (int i = 1; i < l; i++)
+	for (int i = 3; i < l; i++)
 	{
-		if (in[i] > in[i - 1])
+		if (in[i] + in[i-1] + in[i-2] > in[i-1] + in[i-2] + in[i-3])
 			count++;
 	}
 	printf("%d\n", count);
