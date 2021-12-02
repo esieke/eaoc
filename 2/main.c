@@ -34,6 +34,7 @@ struct pos
 {
 	int x;
 	int y;
+	int aim;
 };
 
 int main()
@@ -57,28 +58,42 @@ int main()
 
 		if (strcmp(c, "forward") == 0)
 		{
-			in[i].x = val;
-			in[i].y = 0;
+			if (i == 0)
+			{
+				in[i].x = val;
+				in[i].y = 0;
+				in[i].aim = 0;
+			}
+			else
+			{
+				in[i].x = in[i - 1].x + val;
+				in[i].y = in[i - 1].y + in[i - 1].aim * val;
+				in[i].aim = in[i - 1].aim;
+			}
 		}
-		if (strcmp(c, "down") == 0)
+
+		int upFlg = strcmp(c, "up") == 0;
+		int downFlg = strcmp(c, "down") == 0;
+		if (upFlg || downFlg)
 		{
-			in[i].x = 0;
-			in[i].y = val;
-		}
-		if (strcmp(c, "up") == 0)
-		{
-			in[i].x = 0;
-			in[i].y = -val;
+			if (i == 0)
+			{
+				in[i].x = 0;
+				in[i].y = 0;
+				in[i].aim = val;
+			}
+			else
+			{
+				in[i].x = in[i - 1].x;
+				in[i].y = in[i - 1].y;
+				if (upFlg)
+					in[i].aim = in[i - 1].aim - val;
+				if (downFlg)
+					in[i].aim = in[i - 1].aim + val;
+			}
 		}
 	}
 
-	struct pos posAct = {.x = 0, .y = 0};
-	for (int i = 0; i < l; i++)
-	{
-		posAct.x += in[i].x;
-		posAct.y += in[i].y;
-	}
-	
-	printf("%d\n", posAct.x * posAct.y);
+	printf("%d\n", in[l-1].x * in[l-1].y); // 1855892637
 	return 0;
 }
