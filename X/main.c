@@ -5,8 +5,8 @@
 
 int aocOpen(const char *name, FILE **f)
 {
-	int lines;
-	char buf;
+	int lines = 0;
+	char buf = 0;
 
 	*f = fopen(name, "r");
 	if (*f == NULL)
