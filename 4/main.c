@@ -107,7 +107,7 @@ int main()
 	}
 
 	int inLen = 0;
-	char in[IN_LEN];
+	int in[IN_LEN];
 	int boardsLen = (l - 1) / 6;
 	board boards[boardsLen];
 	memset(&boards, 0, boardsLen * sizeof(board));
@@ -116,33 +116,22 @@ int main()
 	{
 		if (i == 0)
 		{
-			char c = 0;
-			char numS[10];
-			memset(&numS, '\n', 10 * sizeof(char));
-			int numSi = 0;
-			while (1)
+			// read line
+			char buf[STR_LEN];
+			char *cr = fgets(buf, STR_LEN, f);
+			if (cr == NULL && errno > 0)
+				return 5;
+			if (strlen(buf) > STR_LEN - 1)
+				return 6; // buffer limit STR_LEN
+
+			char *t = strtok(buf, ",");
+			while (t != NULL)
 			{
-				int r = fscanf(f, "%c", &c);
+				int r = sscanf(t, "%d,", &in[inLen]);
 				if (r == EOF && errno > 0)
-					return 2;
-				if (c == ',' || c == '\n')
-				{
-					int r = sscanf(numS, "%d", &in[inLen]);
-					if (r == EOF && errno > 0)
-						return 3;
-					inLen++;
-					numSi = 0;
-					memset(&numS, '\n', 10 * sizeof(char));
-					if (c == '\n')
-						break;
-				}
-				else
-				{
-					numS[numSi] = c;
-					numSi++;
-					if (numSi > 10 - 2)
-						return 4;
-				}
+					return 5;
+				inLen++;
+				t = strtok(NULL, ",");
 			}
 		}
 		else
@@ -161,7 +150,6 @@ int main()
 	}
 
 	int lastRes = 0;
-	int lastResCtr = 0;
 	for (int i = 0; i < inLen; i++)
 	{
 		for (int k = 0; k < boardsLen; k++)
@@ -180,7 +168,6 @@ int main()
 					int res = checkResult(&boards[k], r, c);
 					if (res > -1)
 					{
-
 						lastRes = res;
 					}
 				}
