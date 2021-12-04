@@ -18,6 +18,7 @@ typedef struct board_
 	field field[5][5];
 	field acsField[5][5];
 	int sumMarked;
+	int won;
 } board;
 
 int desBoard(const void *a, const void *b)
@@ -32,6 +33,7 @@ int ascField(const void *a, const void *b)
 
 int calcResult(board *b, int row, int col)
 {
+	b->won = 1;
 	int res = 0;
 	for (int r = 0; r < 5; r++)
 	{
@@ -47,6 +49,8 @@ int calcResult(board *b, int row, int col)
 
 int checkResult(board *b, int row, int col)
 {
+	if (b->won)
+		return -1;
 	int check = 0;
 	for (int c = 0; c < 5; c++)
 	{
@@ -156,6 +160,8 @@ int main()
 		}
 	}
 
+	int lastRes = 0;
+	int lastResCtr = 0;
 	for (int i = 0; i < inLen; i++)
 	{
 		for (int k = 0; k < boardsLen; k++)
@@ -174,13 +180,14 @@ int main()
 					int res = checkResult(&boards[k], r, c);
 					if (res > -1)
 					{
-						printf("%d\n", res);
-						return 0;
+
+						lastRes = res;
 					}
 				}
 			}
 		}
 	}
 
+	printf("%d\n", lastRes);
 	return 0;
 }
