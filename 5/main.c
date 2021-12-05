@@ -20,15 +20,15 @@ typedef struct line_
 typedef struct map_
 {
 	pos dim;
-	int *vents; // 2Dim Array
+	void *vents; // 2Dim Array
 } map;
 
 int setV(line *l)
 {
 	int dX = l->end.x - l->begin.x;
-	int dXAbs = dX < 0 ? dX*-1 : dX;
+	int dXAbs = dX < 0 ? dX * -1 : dX;
 	int dY = l->end.y - l->begin.y;
-	int dYAbs = dY < 0 ? dY*-1 : dY;
+	int dYAbs = dY < 0 ? dY * -1 : dY;
 
 	if (!(
 			l->begin.x == l->end.x ||
@@ -61,12 +61,14 @@ void drawLine(map *m, line *l)
 	if (setV(l) < 0)
 		return;
 
+	int (*vents)[m->dim.x][m->dim.y] = m->vents;
+
 	pos p = l->end;
-	m->vents[p.x * m->dim.x + p.y] += 1;
+	(*vents)[p.x][p.y] += 1;
 	p = l->begin;
 	while (!(p.x == l->end.x && p.y == l->end.y))
 	{
-		m->vents[p.x * m->dim.x + p.y] += 1;
+		(*vents)[p.x][p.y] += 1;
 		p.x += l->v.x;
 		p.y += l->v.y;
 	}
@@ -74,14 +76,15 @@ void drawLine(map *m, line *l)
 
 void printMap(map *m)
 {
+	int (*vents)[m->dim.x][m->dim.y] = m->vents;
 	for (int x = 0; x < m->dim.x; x++)
 	{
 		for (int y = 0; y < m->dim.y; y++)
 		{
-			if (m->vents[x * m->dim.x + y] == 0)
+			if ((*vents)[x][y] == 0)
 				printf(".");
 			else
-				printf("%d", m->vents[x * m->dim.x + y]);
+				printf("%d",(*vents)[x][y]);
 		}
 		printf("\n");
 	}
@@ -89,12 +92,13 @@ void printMap(map *m)
 
 int result(map *m)
 {
+	int (*vents)[m->dim.x][m->dim.y] = m->vents;
 	int res = 0;
 	for (int x = 0; x < m->dim.x; x++)
 	{
 		for (int y = 0; y < m->dim.y; y++)
 		{
-			if (m->vents[x * m->dim.x + y] > 1)
+			if ((*vents)[x][y] > 1)
 				res++;
 		}
 	}
@@ -172,9 +176,9 @@ int main()
 	map.dim.x++;
 	map.dim.y++;
 
-	int vents[map.dim.x * map.dim.y];
+	int vents[map.dim.x][map.dim.y];
 	memset(vents, 0, map.dim.x * map.dim.y * sizeof(int));
-	map.vents = vents;
+	map.vents = &vents;
 
 	for (int i = 0; i < l; i++)
 	{
