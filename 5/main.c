@@ -25,28 +25,34 @@ typedef struct map_
 
 int setV(line *l)
 {
-	if (!(l->begin.x == l->end.x || l->begin.y == l->end.y))
+	int dX = l->end.x - l->begin.x;
+	int dXAbs = dX < 0 ? dX*-1 : dX;
+	int dY = l->end.y - l->begin.y;
+	int dYAbs = dY < 0 ? dY*-1 : dY;
+
+	if (!(
+			l->begin.x == l->end.x ||
+			l->begin.y == l->end.y ||
+			(dXAbs == dYAbs && dXAbs != 0)))
 		return -1;
 
 	if (l->begin.x == l->end.x)
 	{
-		if ((l->end.y - l->begin.y) < 0)
-			l->v.y = -1;
-		if ((l->end.y - l->begin.y) > 0)
-			l->v.y = 1;
-		if ((l->end.y - l->begin.y) == 0)
-			l->v.y = 0;
+		l->v.y = dY / dYAbs;
 		l->v.x = 0;
-
 		return 0;
 	}
-	if ((l->end.x - l->begin.x) < 0)
-		l->v.x = -1;
-	if ((l->end.x - l->begin.x) > 0)
-		l->v.x = 1;
-	if ((l->end.x - l->begin.x) == 0)
-		l->v.x = 0;
-	l->v.y = 0;
+
+	if (l->begin.y == l->end.y)
+	{
+		l->v.x = dX / dXAbs;
+		l->v.y = 0;
+		return 0;
+	}
+
+	l->v.x = dX / dXAbs;
+	l->v.y = dY / dYAbs;
+
 	return 0;
 }
 
@@ -175,7 +181,7 @@ int main()
 		drawLine(&map, &lines[i]);
 	}
 
-	//printMap(&map);
+	// printMap(&map);
 
 	printf("%d\n", result(&map));
 
