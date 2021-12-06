@@ -166,7 +166,7 @@ int main()
 		addNum(&clus, in[i], 1);
 	}
 
-	for (int i = 0; i < 80; i++)
+	for (int i = 0; i < 256; i++)
 	{
 		simDay(&clus);
 	}
