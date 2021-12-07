@@ -34,10 +34,16 @@ int aocOpen(const char *name, FILE **f)
 
 int diff(int a, int b)
 {
-	int res = a - b;
-	if (res < 0)
-		res *= -1;
-	return res;
+	int diff = a - b;
+	int ret = 0;
+	if (diff < 0)
+		diff *= -1;
+	for (int i = 0; i < diff; i++)
+	{
+		ret += i + 1;
+	}
+	
+	return ret;
 }
 
 int main()
