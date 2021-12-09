@@ -6,13 +6,55 @@
 
 #define STR_LEN 500
 
+int counter_low = 1;
+
 typedef struct pos_
 {
 	int x;
 	int y;
 } pos;
 
-u_int64_t checkMinOfPos(void *grid, int max_y, int max_x, int y, int x)
+int des(const void *a, const void *b)
+{
+	return (*(u_int64_t *)b - *(u_int64_t *)a);
+}
+
+void checkBasin(void *grid, void *basin, int max_y, int max_x, int y, int x, int id)
+{
+	u_int8_t(*g)[max_y][max_x] = grid;
+	u_int8_t(*b)[max_y][max_x] = basin;
+	u_int8_t v = (*g)[y][x];
+
+	(*b)[y][x] = id;
+	for (int yy = y - 1; yy < y + 2; yy++)
+	{
+		if (yy != y && yy >= 0 && yy < max_y)
+		{
+			u_int8_t vv = (*g)[yy][x];
+			if (vv > v && vv < 9)
+			{
+				assert((*b)[yy][x] == 0 || (*b)[yy][x] == id);
+				(*b)[yy][x] = id;
+				checkBasin(grid, basin, max_y, max_x, yy, x, id);
+			}
+		}
+	}
+	for (int xx = x - 1; xx < x + 2; xx++)
+	{
+		if (xx != x && xx >= 0 && xx < max_x)
+		{
+			u_int8_t vv = (*g)[y][xx];
+			if (vv > v && vv < 9)
+			{
+				assert((*b)[y][xx] == 0 || (*b)[y][xx] == id);
+				(*b)[y][xx] = id;
+				checkBasin(grid, basin, max_y, max_x, y, xx, id);
+			}
+		}
+	}
+}
+
+u_int64_t checkMinOfPos(void *grid, void *basin, int max_y, int max_x, int y, int x)
 {
 	u_int8_t(*g)[max_y][max_x] = grid;
 	u_int8_t v = (*g)[y][x];
@@ -35,11 +77,12 @@ u_int64_t checkMinOfPos(void *grid, int max_y, int max_x, int y, int x)
 		}
 	}
 
-	// 1 0 5 5
+	checkBasin(grid, basin, max_y, max_x, y, x, counter_low);
+	counter_low++;
 	return (u_int64_t)(v + 1);
 }
 
-int checkMin(void *grid, int max_y, int max_x)
+int checkMin(void *grid, void *basin, int max_y, int max_x)
 {
 	u_int64_t ret = 0;
 	u_int8_t(*g)[max_y][max_x] = grid;
@@ -48,10 +91,30 @@ int checkMin(void *grid, int max_y, int max_x)
 		u_int8_t buf = 0;
 		for (int x = 0; x < max_x; x++)
 		{
-			ret += checkMinOfPos(grid, max_y, max_x, y, x);
+			ret += checkMinOfPos(grid, basin, max_y, max_x, y, x);
 		}
 	}
 	return ret;
+}
+
+u_int64_t getResult(void *basin, int max_y, int max_x, int n)
+{
+	u_int64_t sums[n];
+ 	memset(sums, 0, n * sizeof(u_int64_t));
+
+	u_int8_t(*b)[max_y][max_x] = basin;
+	for (int y = 0; y < max_y; y++)
+	{
+		u_int8_t buf = 0;
+		for (int x = 0; x < max_x; x++)
+		{
+			if((*b)[y][x] > 0)
+				sums[(*b)[y][x]]++;
+		}
+	}
+	qsort(sums, n, sizeof(u_int64_t), des);
+
+	return sums[0] * sums[1] * sums[2];
 }
 
 int aocOpen(const char *name, FILE **f, pos *dim)
@@ -98,7 +161,10 @@ int main()
 	}
 
 	u_int8_t grid[dim.y][dim.x];
-	memset(&grid, 0, dim.x * dim.x * sizeof(u_int8_t));
+	memset(grid, 0, dim.x * dim.x * sizeof(u_int8_t));
+	u_int8_t basin[dim.y][dim.x];
+	memset(basin, 0, dim.x * dim.x * sizeof(u_int8_t));
+
 	for (int y = 0; y < dim.y; y++)
 	{
 		u_int8_t buf = 0;
@@ -114,7 +180,11 @@ int main()
 		assert(buf == 10 || r == EOF);
 	}
 
-	printf("%d\n", checkMin(&grid, dim.y, dim.x));
+	int n = checkMin(&grid, &basin, dim.y, dim.x);
+
+	u_int64_t res = getResult(&basin, dim.y, dim.x, n);
+
+	printf("%lld\n", res);
 
 	return 0;
 }
