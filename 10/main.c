@@ -12,6 +12,16 @@ typedef struct dim_
 	int rows;
 } dim;
 
+int des(const void *a, const void *b)
+{
+	int ret = 0;
+	if (*(u_int64_t *)b > *(u_int64_t *)a)
+		ret = 1;
+	if (*(u_int64_t *)b < *(u_int64_t *)a)
+		ret = -1;
+	return ret;
+}
+
 int aocOpen(const char *name, FILE **f, dim *d)
 {
 	int lines = 0;
@@ -64,9 +74,11 @@ int score(char c)
 
 int parser(void *in, int lines, int rows)
 {
-	int res = 0;
 	char(*i)[lines][rows] = in;
 	char p[PARS_LEN];
+	u_int64_t ress[lines];
+	int ressCtr = 0;
+	memset(ress, 0, lines * sizeof(u_int64_t));
 	for (int l = 0; l < lines; l++)
 	{
 		int pc = 0;
@@ -75,18 +87,15 @@ int parser(void *in, int lines, int rows)
 			char c = (*i)[l][r];
 			if (r == 0)
 			{
-				if (
-					c == '(' ||
-					c == '[' ||
-					c == '{' ||
-					c == '<')
+				if (c == '(' || c == '[' || c == '{' || c == '<')
 				{
+					p[pc] = '('; // initial value can also be [ { <
 					pc++;
 					p[pc] = c;
 				}
 				else
 				{
-					res += score(c);
+					pc = 0;
 					break;
 				}
 			}
@@ -109,18 +118,34 @@ int parser(void *in, int lines, int rows)
 				}
 				else
 				{
-					res += score(c);
+					pc = 0;
 					break;
 				}
 			}
 			assert(pc > -1);
 			assert(pc < PARS_LEN);
 		}
-		if( pc > 0 )
-			printf("incomplete\n");
+		if (pc > 0)
+		{
+			u_int64_t res = 0;
+			for (int i = pc; i > 0; i--)
+			{
+				if (p[i] == '(')
+					res = res * 5 + 1;
+				if (p[i] == '[')
+					res = res * 5 + 2;
+				if (p[i] == '{')
+					res = res * 5 + 3;
+				if (p[i] == '<')
+					res = res * 5 + 4;
+			}
+			ress[ressCtr] = res;
+			ressCtr++;
+		}
 	}
 
-	return res;
+	qsort(ress, lines, sizeof(u_int64_t), des);
+	return ress[ressCtr / 2];
 }
 
 int main()
@@ -145,9 +170,6 @@ int main()
 				break;
 			in[l][r] = (char)buf;
 		}
-
-		// char *cr = fgets(in[l], d.rows, f);
-		// assert(cr != NULL);
 	}
 
 	printf("%d\n", parser(&in, d.lines, d.rows));
