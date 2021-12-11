@@ -113,6 +113,21 @@ int flash(void *grid, int y_max, int x_max)
 	return ret;
 }
 
+int checkZeros(void *grid, int y_max, int x_max)
+{
+	int(*g)[y_max][x_max] = grid;
+
+	for (int y = 0; y < y_max; y++)
+	{
+		for (int x = 0; x < x_max; x++)
+		{
+			if ((*g)[y][x] != 0)
+				return 0;
+		}
+	}
+	return 1;
+}
+
 int incrAdjacent(void *grid, int y_max, int x_max)
 {
 	int(*g)[y_max][x_max] = grid;
@@ -160,15 +175,21 @@ int main()
 	}
 
 	int ret = 0;
-	for (int s = 0; s < STEPS; s++)
+	int s = 0;
+	while (1)
 	{
+		s++;
 		incr(&grid, d.y, d.x);
 		incrAdjacent(&grid, d.y, d.x);
-
-		ret += flash(&grid, d.y, d.x);
+		flash(&grid, d.y, d.x);
+		if (checkZeros(&grid, d.y, d.x) == 1)
+		{
+			ret = s;
+			break;
+		}
 	}
 
 	printf("%d\n", ret);
-	
+
 	return 0;
 }
