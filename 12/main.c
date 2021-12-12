@@ -94,22 +94,8 @@ int check(cave *c, void *caves, int cavesLen, void *logs, int logsLen)
 			ret += check(&nextC, caves, cavesLen, newLogs, logsLen);
 		}
 	}
-	// for childs: if child not in log and child equal start -> incr result
-
-	// for childs: if child not in log ->
-	// 1. add this to a copy of log if lower case
-	// 2. get child cave by name
-	// 3. call check and incr result
 	return ret;
 }
-
-// int check(void *caves, int cavesLen, void *logs, int logsLen)
-// {
-// 	cave(*c)[cavesLen] = caves;
-// 	char(*l)[logsLen][STR_LEN] = logs;
-
-// 	return 0;
-// }
 
 int main()
 {
