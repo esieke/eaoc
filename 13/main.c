@@ -170,9 +170,13 @@ void initMap(input *in)
 
 void foldMap(input *in, int n)
 {
+
 	pos(*p)[in->posLen] = in->pos;
 	inst(*i)[in->instLen] = in->inst;
 	char(*m)[in->dim.y][in->dim.x] = in->map;
+
+	if (!((*i)[n].dir == 'y' || (*i)[n].dir == 'x'))
+		return;
 
 	char mc[in->dim.y][in->dim.x];
 	memcpy(mc, (*m), in->dim.y * in->dim.x * sizeof(char));
@@ -181,24 +185,26 @@ void foldMap(input *in, int n)
 	if ((*i)[n].dir == 'y')
 	{
 		int up_dim = (*i)[n].n;
-		int low_dim = (in->dim.y - (*i)[n].n - 1);
+		int low_dim = (in->dimAct.y - (*i)[n].n - 1);
 		int diff = 0;
 		if (low_dim > up_dim)
 			diff = low_dim - up_dim;
 		for (int yi = 0; yi < up_dim; yi++)
 		{
-			for (int xi = 0; xi < in->dim.x; xi++)
+			for (int xi = 0; xi < in->dimAct.x; xi++)
 			{
 				(*m)[yi + diff][xi] = mc[yi][xi];
 			}
 		}
-		int offset = in->dim.y - 1;
+		if (up_dim > low_dim)
+			diff = up_dim - low_dim;
+		int offset = in->dimAct.y - 1;
 		for (int yi = 0; yi < low_dim; yi++)
 		{
-			for (int xi = 0; xi < in->dim.x; xi++)
+			for (int xi = 0; xi < in->dimAct.x; xi++)
 			{
-				if ((*m)[yi][xi] != '#')
-					(*m)[yi][xi] = mc[offset - yi][xi];
+				if ((*m)[yi + diff][xi] != '#')
+					(*m)[yi + diff][xi] = mc[offset - yi][xi];
 			}
 		}
 		in->dimAct.y = up_dim;
@@ -207,24 +213,26 @@ void foldMap(input *in, int n)
 	if ((*i)[n].dir == 'x')
 	{
 		int left_dim = (*i)[n].n;
-		int right_dim = (in->dim.x - (*i)[n].n - 1);
+		int right_dim = (in->dimAct.x - (*i)[n].n - 1);
 		int diff = 0;
 		if (right_dim > left_dim)
 			diff = right_dim - left_dim;
-		for (int yi = 0; yi < in->dim.y; yi++)
+		for (int yi = 0; yi < in->dimAct.y; yi++)
 		{
 			for (int xi = 0; xi < left_dim; xi++)
 			{
 				(*m)[yi][xi + diff] = mc[yi][xi];
 			}
 		}
-		int offset = in->dim.x - 1;
-		for (int yi = 0; yi < in->dim.y; yi++)
+		if ( left_dim > right_dim)
+			diff = left_dim - right_dim;
+		int offset = in->dimAct.x - 1;
+		for (int yi = 0; yi < in->dimAct.y; yi++)
 		{
 			for (int xi = 0; xi < right_dim; xi++)
 			{
-				if ((*m)[yi][xi] != '#')
-					(*m)[yi][xi] = mc[yi][offset - xi];
+				if ((*m)[yi][xi + diff] != '#')
+					(*m)[yi][xi + diff] = mc[yi][offset - xi];
 			}
 		}
 		in->dimAct.x = left_dim;
@@ -235,7 +243,7 @@ void foldAllMap(input *in)
 {
 	for (int i = 0; i < in->instLen; i++)
 	{
-		foldMap(in, in->inst[i].n);
+		foldMap(in, i);
 	}
 }
 
@@ -298,10 +306,16 @@ int main()
 	memset(map, '.', in.dim.y * in.dim.x * sizeof(char));
 	in.map = map;
 	initMap(&in);
-	foldMap(&in, 0);
+	foldAllMap(&in);
 
-	// printMap(&in);
-	printf("%d\n", countMap(&in));
+	printMap(&in);
+
+	// ####...##..##..#..#...##..##...##..#..#.
+	// #.......#.#..#.#..#....#.#..#.#..#.#..#.
+	// ###.....#.#..#.####....#.#....#..#.####.
+	// #.......#.####.#..#....#.#.##.####.#..#.
+	// #....#..#.#..#.#..#.#..#.#..#.#..#.#..#.
+	// #.....##..#..#.#..#..##...###.#..#.#..#.
 
 	return 0;
 }
