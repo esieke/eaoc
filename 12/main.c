@@ -97,6 +97,75 @@ int check(cave *c, void *caves, int cavesLen, void *logs, int logsLen)
 	return ret;
 }
 
+int checkTwice(cave *c, void *caves, int cavesLen, void *logs, int logsLen, void *twice, int ctr)
+{
+	cave(*cs)[cavesLen] = caves;
+	char(*l)[logsLen][STR_LEN] = logs;
+	char(*t)[STR_LEN] = twice;
+	int lctr = ctr;
+
+	int ret = 0;
+	for (int i = 0; c->childs[i][0] != 0; i++)
+	{
+		int inLog = 0;
+		for (int li = 0; li < logsLen; li++)
+		{
+			if (strcmp(c->childs[i], (*l)[li]) == 0)
+				inLog = 1;
+		}
+		if (*t != NULL)
+		{
+			if (strcmp(*t, c->childs[i]) == 0)
+			{
+				if (lctr == 0)
+				{
+					inLog = 0;
+					t = NULL;
+				}
+				if (lctr > -1)
+					lctr--;
+			}
+		}
+
+		int isStart = 0;
+		if (inLog == 0)
+		{
+			if (strcmp(c->childs[i], "start") == 0)
+			{
+					ret++;
+				isStart = 1;
+			}
+		}
+		// childCave
+		if (inLog == 0 && isStart == 0)
+		{
+			// getCave
+			cave nextC;
+			for (int ci = 0; ci < cavesLen; ci++)
+			{
+				if (strcmp(c->childs[i], (*cs)[ci].name) == 0)
+					nextC = (*cs)[ci];
+			}
+			// copy Log to new log
+			char newLogs[logsLen][STR_LEN];
+			memset(newLogs, 0, logsLen * STR_LEN * sizeof(char));
+			for (int li = 0; li < logsLen; li++)
+			{
+				strcpy(newLogs[li], (*l)[li]);
+				if ((*l)[li][0] == 0)
+				{
+					if (c->name[0] > 97 && c->name[0] < 123)
+						strcpy(newLogs[li], c->name);
+					break;
+				}
+			}
+			ret += checkTwice(&nextC, caves, cavesLen, newLogs, logsLen, *t, lctr);
+		}
+	}
+
+	return ret;
+}
+
 int main()
 {
 	FILE *f;
@@ -108,6 +177,7 @@ int main()
 	}
 
 	char in[l][2][STR_LEN];
+	memset(in, 0, l * 2 * STR_LEN * sizeof(char));
 	for (int i = 0; i < l; i++)
 	{
 		int r = 0;
@@ -137,7 +207,7 @@ int main()
 			r++;
 		}
 		// print raw input
-		// printf("%s-%s\n", in[i][0], in[i][1]);
+		printf("%s-%s\n", in[i][0], in[i][1]);
 	}
 
 	// get all caves
@@ -195,9 +265,30 @@ int main()
 	}
 	// copy Log to new log
 	char newLog[MAX_LOGS][STR_LEN];
-	memset(newLog, 0, MAX_LOGS * STR_LEN* sizeof(char));
+	memset(newLog, 0, MAX_LOGS * STR_LEN * sizeof(char));
 	strcpy(newLog[0], caveEnd.name);
-	int ret = check(&caveEnd, caves, cavesLen, newLog, MAX_LOGS);
+	int ret = 0;
+	int retCheck = check(&caveEnd, caves, cavesLen, newLog, MAX_LOGS);
+	ret += retCheck;
+	for (int ci = 0; ci < cavesLen; ci++)
+	{
+		if (strcmp(caves[ci].name, "start") != 0 &&
+			strcmp(caves[ci].name, "end") != 0 &&
+			caves[ci].name[0] > 97 &&
+			caves[ci].name[0] < 123)
+		{
+			char twice[STR_LEN];
+			strcpy(twice, caves[ci].name);
+			int ctr = 0;
+			int ret_buf = -1;
+			while (ctr < 10)
+			{
+				ret_buf = checkTwice(&caveEnd, caves, cavesLen, newLog, MAX_LOGS, twice, ctr);
+				ctr++;
+				ret += ret_buf - retCheck;
+			}
+		}
+	}
 
 	printf("%d\n", ret);
 	return 0;
