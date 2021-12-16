@@ -9,8 +9,8 @@
 
 typedef struct dim_
 {
-	int y;
-	int x;
+	u_int64_t y;
+	u_int64_t x;
 } dim;
 
 int aocOpen(const char *name, FILE **f, dim *d)
@@ -60,86 +60,101 @@ int main()
 		return 1;
 	}
 
+	dim od = {.y = d.x, .x = d.x};
+	d.y *= 1;
+	d.x *= 1;
 	assert(d.y == d.x);
-	u_int32_t in[d.y][d.x];
-	memset(in, 0, d.y * d.x * sizeof(u_int32_t));
-	u_int32_t cost[d.y][d.x];
-	memset(cost, UINT32_MAX, d.y * d.x * sizeof(u_int32_t));
-	for (int y = 0; y < d.y; y++)
+	u_int64_t in[d.y][d.x];
+	memset(in, 0, d.y * d.x * sizeof(u_int64_t));
+	u_int64_t cost[d.y][d.x];
+	memset(cost, UINT32_MAX, d.y * d.x * sizeof(u_int64_t));
+	for (int y = 0; y < od.y; y++)
 	{
-		for (int x = 0; x < d.x; x++)
+		for (int x = 0; x < od.x; x++)
 		{
 			int buf = fgetc(f);
-			in[y][x] = (u_int32_t)(buf - 48);
+			in[y][x] = (u_int64_t)(buf - 48);
 		}
 		int buf = fgetc(f);
 		if (buf == EOF)
 			break;
 	}
 
-	cost[d.y - 1][d.x - 1] = in[d.y - 1][d.x - 1];
-	u_int32_t v = 0;
-	for (u_int32_t i = 0; i < d.x - 1; i++)
+	for (u_int64_t yi = 0; yi < d.y; yi++)
 	{
-		u_int32_t corner = d.x - 2 - i;
-		v = in[corner][corner];
-		for (u_int32_t xi = d.x - 1; xi + 1 >= corner + 1; xi--)
+		for (u_int64_t xi = 0; xi < d.x; xi++)
+		{
+			if (yi > od.y - 1 && xi < od.x)
+				in[yi][xi] = in[yi - od.y][xi] + 1;
+			if (xi > od.x - 1)
+				in[yi][xi] = in[yi][xi - od.x] + 1;
+			if (in[yi][xi] > 9)
+				in[yi][xi] = 1;
+		}
+	}
+
+	cost[d.y - 1][d.x - 1] = in[d.y - 1][d.x - 1];
+	for (u_int64_t i = 0; i < d.x - 1; i++)
+	{
+		u_int64_t corner = d.x - 2 - i;
+		assert(corner >= 0);
+		for (u_int64_t xi = d.x - 1; xi + 1 >= corner + 1; xi--)
 		{
 			if (xi > corner)
 			{
 				cost[corner][xi] = cost[corner + 1][xi] + in[corner][xi];
 			}
 		}
-		for (u_int32_t xi = d.x - 1; xi + 1 >= corner + 1; xi--)
+		for (u_int64_t xi = d.x - 1; xi + 1 >= corner + 1; xi--)
 		{
 			if (xi < d.x - 1)
 			{
-				u_int32_t v = cost[corner][xi + 1] + in[corner][xi];
+				u_int64_t v = cost[corner][xi + 1] + in[corner][xi];
 				if (v < cost[corner][xi])
 					cost[corner][xi] = v;
 			}
 		}
 
-		for (u_int32_t yi = d.y - 1; yi + 1 >= corner + 1; yi--)
+		for (u_int64_t yi = d.y - 1; yi + 1 >= corner + 1; yi--)
 		{
 			if (yi > corner)
 			{
 				cost[yi][corner] = cost[yi][corner + 1] + in[yi][corner];
 			}
 		}
-		for (u_int32_t yi = d.y - 1; yi + 1 >= corner + 1; yi--)
+		for (u_int64_t yi = d.y - 1; yi + 1 >= corner + 1; yi--)
 		{
 			if (yi < d.y - 1)
 			{
-				u_int32_t v = cost[yi + 1][corner] + in[yi][corner];
+				u_int64_t v = cost[yi + 1][corner] + in[yi][corner];
 				if (v < cost[yi][corner])
 					cost[yi][corner] = v;
 			}
 		}
 	}
 
-	// for (u_int32_t yi = 0; yi < d.y; yi++)
-	// {
-	// 	for (u_int32_t xi = 0; xi < d.x; xi++)
-	// 	{
-	// 		printf("%d\t", in[yi][xi]);
-	// 	}
-	// 	printf("\n");
-	// }
+	for (u_int64_t yi = 0; yi < d.y; yi++)
+	{
+		for (u_int64_t xi = 0; xi < d.x; xi++)
+		{
+			printf("%d\t", in[yi][xi]);
+		}
+		printf("\n");
+	}
 
-	// printf("\n");
+	printf("\n");
 
-	// for (u_int32_t yi = 0; yi < d.y; yi++)
-	// {
-	// 	for (u_int32_t xi = 0; xi < d.x; xi++)
-	// 	{
-	// 		if (cost[yi][xi] == UINT32_MAX)
-	// 			cost[yi][xi] = 0;
-	// 		printf("%d\t", cost[yi][xi]);
-	// 	}
-	// 	printf("\n");
-	// }
+	for (u_int64_t yi = 0; yi < d.y; yi++)
+	{
+		for (u_int64_t xi = 0; xi < d.x; xi++)
+		{
+			if (cost[yi][xi] == UINT32_MAX)
+				cost[yi][xi] = 0;
+			printf("%d\t", cost[yi][xi]);
+		}
+		printf("\n");
+	}
 
-	printf("%d\n", cost[0][0] - in[0][0]);
+	printf("%lld\n", cost[0][0] - in[0][0]);
 	return 0;
 }
