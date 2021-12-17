@@ -5,7 +5,8 @@
 #include "assert.h"
 
 #define STR_LEN 500
-int version = 0;
+u_int64_t version = 0;
+u_int64_t ops = 0;
 
 int aocOpen(const char *name, FILE **f)
 {
@@ -32,12 +33,12 @@ int aocOpen(const char *name, FILE **f)
 	return nums * 4;
 }
 
-void initMsg(void *msg, int len, FILE *f)
+void initMsg(void *msg, u_int64_t len, FILE *f)
 {
 	char(*m)[len] = msg;
 	char buf = 0;
-	int r = 0;
-	for (int i = 0; i < len / 4; i++)
+	u_int64_t r = 0;
+	for (u_int64_t i = 0; i < len / 4; i++)
 	{
 		assert(fscanf(f, "%c", &buf) != EOF);
 		char *b = "0000";
@@ -114,42 +115,45 @@ void initMsg(void *msg, int len, FILE *f)
 	}
 }
 
-int toInt(void *msg, int len)
+u_int64_t toInt(void *msg, u_int64_t len)
 {
 	char(*m)[len] = msg;
-	int ret = 0;
+	u_int64_t ret = 0;
+	assert(len < 63);
 
-	for (int i = 0; i < len; i++)
+	for (u_int64_t i = 0; i < len; i++)
 	{
 		if ((*m)[i] == '1')
-			ret |= 1 << (len - 1 - i);
+			ret |= (u_int64_t)1 << (len - 1 - i);
 	}
 	return ret;
 }
 
-int parseLiteral(void *msg, int len, int *pos)
+u_int64_t parseLiteral(void *msg, u_int64_t len, u_int64_t *pos) // 62
 {
 	char(*m)[len] = msg;
 
-	int resCtr = 0;
+	u_int64_t resCtr = 0;
 	char res[len];
 	memset(res, 0, len * sizeof(char));
 
-	int cont = 1;
+	u_int64_t cont = 1;
 	do
 	{
 		cont = toInt(&(*m)[*pos], 1);
 		*pos += 1;
 		memcpy(&res[resCtr * 4], &(*m)[*pos], 4 * sizeof(char));
 		*pos += 4;
+		assert(*pos < len);
 		resCtr++;
 	} while (*pos < len && cont);
 
-	int value = toInt(res, resCtr * 4);
-	return value;
+	u_int64_t value = toInt(res, resCtr * 4);
+	u_int64_t dval = (u_int64_t)value;
+	return dval;
 }
 
-int parseLength(void *msg, int len, int *pos, int *id)
+u_int64_t parseLength(void *msg, u_int64_t len, u_int64_t *pos, u_int64_t *id)
 {
 	char(*m)[len] = msg;
 
@@ -157,7 +161,7 @@ int parseLength(void *msg, int len, int *pos, int *id)
 	*pos += 1;
 	assert(*id || *id == 0);
 
-	int ret;
+	u_int64_t ret;
 	if (*id) // ID 1 -> 11 Bit number of sub packages
 	{
 		ret = toInt(&(*m)[*pos], 11);
@@ -171,33 +175,67 @@ int parseLength(void *msg, int len, int *pos, int *id)
 	return ret;
 }
 
-long int calc(int id, int a, int b)
+u_int64_t calc(u_int64_t id, u_int64_t a, u_int64_t b)
 {
 	switch (id)
 	{
 	case 0:
+	{
+		printf("%llu + %llu = %llu\n", a, b, a + b);
 		return a + b;
+	}
 	case 1:
+	{
+		printf("%llu * %llu = %llu\n", a, b, a * b);
 		return a * b;
+	}
 	case 2:
+	{
 		if (a < b)
+		{
+			printf("min(%llu, %llu) = %llu\n", a, b, a);
 			return a;
+		}
+		printf("min(%llu, %llu) = %llu\n", a, b, b);
 		return b;
+	}
 	case 3:
+	{
 		if (a > b)
+		{
+			printf("max(%llu, %llu) = %llu\n", a, b, a);
 			return a;
+		}
+		printf("max(%llu, %llu) = %llu\n", a, b, b);
 		return b;
+	}
 	case 5:
+	{
 		if (a > b)
+		{
+			printf("%llu > %llu = %llu\n", a, b, 1);
 			return 1;
+		}
+		printf("%llu > %llu = %llu\n", a, b, 0);
 		return 0;
+	}
 	case 6:
+	{
 		if (a < b)
+		{
+			printf("%llu < %llu = %llu\n", a, b, 1);
 			return 1;
+		}
+		printf("%llu < %llu = %llu\n", a, b, 0);
 		return 0;
+	}
 	case 7:
 		if (a == b)
+		{
+			printf("%llu == %llu = %llu\n", a, b, 1);
 			return 1;
+		}
+		printf("%llu == %llu = %llu\n", a, b, 0);
 		return 0;
 	default:
 		assert(0);
@@ -205,28 +243,33 @@ long int calc(int id, int a, int b)
 	return 0;
 }
 
-long int parseHeader(void *msg, int len, int *pos)
+u_int64_t parseHeader(void *msg, u_int64_t len, u_int64_t *pos)
 {
 	char(*m)[len] = msg;
-	int ver = toInt(&(*m)[*pos], 3);
+	u_int64_t ver = toInt(&(*m)[*pos], 3);
 	*pos += 3;
-
 	version += ver;
 
-	int typeId = toInt(&(*m)[*pos], 3);
+	u_int64_t typeId = toInt(&(*m)[*pos], 3);
 	*pos += 3;
 
 	if (typeId == 4)
 		return parseLiteral(msg, len, pos);
 
-	int id = 0;
-	int n = parseLength(msg, len, pos, &id);
+	u_int64_t id = 0;
+	u_int64_t n = parseLength(msg, len, pos, &id);
 
-	long int ret = 0;
+	u_int64_t ret = 0;
+
+	ops += 1;
+	u_int64_t op = ops;
 	if (id == 1)
 	{
-		for (int i = 0; i < n; i++)
+		for (u_int64_t i = 0; i < n; i++)
 		{
+			if (id > 4)
+				assert(i < 2);
+			printf("%llu:", op);
 			if (i > 0)
 				ret = calc(typeId, ret, parseHeader(msg, len, pos));
 			else
@@ -235,9 +278,12 @@ long int parseHeader(void *msg, int len, int *pos)
 	}
 	if (id == 0)
 	{
-		int spos = *pos, i = 0;
+		u_int64_t spos = *pos, i = 0;
 		while ((*pos - spos) < n)
 		{
+			if (id > 4)
+				assert(i < 2);
+			printf("%llu:", op);
 			if (i > 0)
 				ret = calc(typeId, ret, parseHeader(msg, len, pos));
 			else
@@ -263,11 +309,12 @@ int main()
 
 	initMsg(msg, l, f);
 
-	int pos = 0;
-	int res = parseHeader(msg, l, &pos);
+	u_int64_t pos = 0;
+	u_int64_t res = parseHeader(msg, l, &pos);
+	assert(pos < l);
 	printf("puzzle 1: %d\n", version);
 
-	printf("puzzle 2: %d\n", res);
+	printf("puzzle 2: %llu\n", res);
 
 	return 0;
 }
