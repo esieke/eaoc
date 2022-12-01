@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 )
 
@@ -16,19 +17,20 @@ func main() {
 	defer input.Close()
 	s := bufio.NewScanner(input)
 
-	var max uint64 = 0
-	var val uint64 = 0
+	var vals []int
+	var val int = 0
 	for s.Scan() {
 		l := s.Text()
 		i, err := strconv.Atoi(l)
 		if err != nil {
-			if val > max {
-				max = val
-			}
+			vals = append(vals, val)
 			val = 0
 		} else {
-			val += uint64(i)
+			val += int(i)
 		}
 	}
-	fmt.Print(max)
+
+	sort.Ints(vals)
+
+	fmt.Print(vals[len(vals)-1] + vals[len(vals)-2] + vals[len(vals)-3])
 }
