@@ -14,23 +14,34 @@ func main() {
 	defer input.Close()
 	s := bufio.NewScanner(input)
 
+	var ls [][]byte
 	prioritiesSum := 0
 	for s.Scan() {
 		l := s.Text()
 		bl := []byte(l)
-		blLen := len(bl)
-		m := make(map[byte]bool)
-		for i := 0; i < blLen/2; i++ {
-			m[bl[i]] = true
+		ls = append(ls, bl)
+	}
+	var priorities []int
+	for i := 0; i < len(ls); i += 3 {
+		m1 := make(map[byte]bool)
+		for k := 0; k < len(ls[i]); k++ {
+			m1[ls[i][k]] = true
 		}
-		for i := blLen / 2; i < blLen; i++ {
-			v := m[bl[i]]
-			if v {
-				if bl[i] >= 'a' && bl[i] <= 'z' {
-					prioritiesSum += int(bl[i] - 'a' + 1)
+		m2 := make(map[byte]bool)
+		for k := 0; k < len(ls[i+1]); k++ {
+			m2[ls[i+1][k]] = true
+		}
+		for k := 0; k < len(ls[i+2]); k++ {
+			v1 := m1[ls[i+2][k]]
+			v2 := m2[ls[i+2][k]]
+			if v1 && v2 {
+				if ls[i+2][k] >= 'a' && ls[i+2][k] <= 'z' {
+					priorities = append(priorities, int(ls[i+2][k]-'a')+1)
+					prioritiesSum += int(ls[i+2][k]-'a') + 1
 				}
-				if bl[i] >= 'A' && bl[i] <= 'Z' {
-					prioritiesSum += int(bl[i] - 'A' + 27)
+				if ls[i+2][k] >= 'A' && ls[i+2][k] <= 'Z' {
+					priorities = append(priorities, int(ls[i+2][k]-'A')+27)
+					prioritiesSum += int(ls[i+2][k]-'A') + 27
 				}
 				break
 			}
