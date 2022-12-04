@@ -28,15 +28,10 @@ func main() {
 		l := s.Text()
 		p := pair{}
 		fmt.Sscanf(l, "%d-%d,%d-%d", &p.firstElf.min, &p.firstElf.max, &p.secondElf.min, &p.secondElf.max)
-		state := true
-		if p.firstElf.min <= p.secondElf.min && p.firstElf.max >= p.secondElf.max {
-			state = false
-			count += 1
-		}
-		if p.firstElf.min >= p.secondElf.min && p.firstElf.max <= p.secondElf.max && state {
+		if p.firstElf.max >= p.secondElf.min && p.firstElf.min <= p.secondElf.max {
 			count += 1
 		}
 	}
-
+	// 898 is wrong
 	log.Println(count)
 }
