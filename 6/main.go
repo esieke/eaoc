@@ -22,7 +22,7 @@ func main() {
 		bl = []byte(l)
 	}
 
-	n := 4
+	n := 14
 	lastN := make([]byte, n)
 	for i, _ := range bl {
 		if i < n {
@@ -34,17 +34,17 @@ func main() {
 		sort.Slice(lastN, func(k, l int) bool {
 			return lastN[k] < lastN[l]
 		})
-		sop := true
+		som := true
 		for k, _ := range lastN {
 			if k < 1 {
 				continue
 			}
 			if lastN[k] == lastN[k-1] {
-				sop = false
+				som = false
 				break
 			}
 		}
-		if sop {
+		if som {
 			fmt.Println(i)
 			return
 		}
