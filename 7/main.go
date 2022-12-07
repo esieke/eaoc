@@ -62,12 +62,15 @@ func main() {
 	}
 	sort.Ints(size)
 
+	requiredSize := 30000000 - (70000000 - dirs["//"])
+
 	result := 0
 	for _, v := range size {
-		if v > 100000 {
+		if v >= requiredSize {
+			result = v
 			break
 		}
-		result += v
+
 	}
 	fmt.Println(result)
 }
