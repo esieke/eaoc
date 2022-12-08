@@ -16,14 +16,14 @@ func main() {
 	s := bufio.NewScanner(input)
 
 	m := [][]byte{}
-	v := [][]byte{}
+	v := [][]uint64{}
 	for s.Scan() {
 		l := s.Text()
 		lb := []byte(l)
 		for i, _ := range lb {
 			lb[i] = lb[i] - '0'
 		}
-		vb := make([]byte, len(lb))
+		vb := make([]uint64, len(lb))
 		m = append(m, lb)
 		v = append(v, vb)
 	}
@@ -63,11 +63,56 @@ func main() {
 	var r uint64
 	for y, _ := range m {
 		for x, _ := range m[y] {
-			r += uint64(v[y][x])
+			if v[y][x] > 0 {
+				s := scenic(m, x, y, len(m[0]), len(m))
+				if s > r {
+					r = s
+				}
+			}
+		}
+	}
+	fmt.Println(r)
+}
+
+func scenic(m [][]byte, xAct, yAct, xLen, yLen int) uint64 {
+	var right uint64
+	var left uint64
+	var down uint64
+	var up uint64
+
+	// right
+	x, y := xAct, yAct
+	for x = xAct + 1; x < xLen; x++ {
+		right++
+		if m[y][x] >= m[yAct][xAct] {
+			break
+		}
+	}
+	// left
+	x, y = xAct, yAct
+	for x = xAct - 1; x >= 0; x-- {
+		left++
+		if m[y][x] >= m[yAct][xAct] {
+			break
+		}
+	}
+	// down
+	x, y = xAct, yAct
+	for y = yAct + 1; y < yLen; y++ {
+		down++
+		if m[y][x] >= m[yAct][xAct] {
+			break
 		}
 	}
 
-	// fmt.Println(m)
-	// fmt.Println(v)
-	fmt.Println(r)
+	// up
+	x, y = xAct, yAct
+	for y = yAct - 1; y >= 0; y-- {
+		up++
+		if m[y][x] >= m[yAct][xAct] {
+			break
+		}
+	}
+
+	return up * down * left * right
 }
