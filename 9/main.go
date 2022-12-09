@@ -21,7 +21,7 @@ func main() {
 	defer input.Close()
 	s := bufio.NewScanner(input)
 
-	n := 2
+	n := 10
 	pos := make([]position, n)
 	track := make(map[position]int)
 	track[pos[0]] = 1 // initial position
