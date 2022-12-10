@@ -21,9 +21,12 @@ func main() {
 	defer input.Close()
 	s := bufio.NewScanner(input)
 
-	var r int
 	var cycle int
 	var X int = 1
+	sprite := make([]byte, 40)
+	screen := make([][]byte, 6)
+	spriteInit(sprite)
+	screenInit(screen)
 	for s.Scan() {
 		l := s.Text()
 		ls := strings.Split(l, " ")
@@ -32,7 +35,7 @@ func main() {
 		if len(ls) == 1 {
 			// noop
 			cycle += 1
-			r += signalStrength(cycle, X)
+			screenUpdate(screen, sprite, cycle)
 		}
 		if len(ls) == 2 {
 			// addx
@@ -41,22 +44,61 @@ func main() {
 				panic("syntax error. value must be an integer")
 			}
 			cycle += 1
-			r += signalStrength(cycle, X)
+			screenUpdate(screen, sprite, cycle)
 			cycle += 1
-			r += signalStrength(cycle, X)
+			screenUpdate(screen, sprite, cycle)
 			X += v
+			spriteUpdate(sprite, X, cycle)
 		}
 		if len(ls) > 2 || len(ls) < 1 {
 			panic("syntax error")
 		}
 	}
-	fmt.Println(r)
 }
 
-func signalStrength(cycle, X int) int {
-	var r int
-	if cycle%40 == 20 {
-		r = cycle * X
+func screenInit(screen [][]byte) {
+	for y, _ := range screen {
+		screen[y] = make([]byte, 40)
+		for x, _ := range screen[y] {
+			screen[y][x] = 'x'
+		}
 	}
-	return r
+}
+
+func screenUpdate(screen [][]byte, sprite []byte, cycle int) {
+	x := (cycle - 1) % 40
+	y := (cycle - 1) % 240 / 40
+	screen[y][x] = sprite[x]
+	if x == 39 && y == 5 {
+		for py, _ := range screen {
+			for px, _ := range screen[py] {
+				fmt.Printf("%s", string(screen[py][px]))
+			}
+			fmt.Printf("\n")
+		}
+	}
+}
+
+func spriteInit(sprite []byte) {
+	for i, _ := range sprite {
+		sprite[i] = '.'
+		if i < 3 {
+			sprite[i] = '#'
+		}
+	}
+}
+
+func spriteUpdate(sprite []byte, center, cycle int) {
+	for i, _ := range sprite {
+		sprite[i] = '.'
+		if i == center-1 && center-1 > -1 {
+			sprite[i] = '#'
+		}
+		if i == center {
+			sprite[i] = '#'
+		}
+		if i == center+1 && center+1 < len(sprite) {
+			sprite[i] = '#'
+		}
+	}
 }
