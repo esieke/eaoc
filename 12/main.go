@@ -31,7 +31,6 @@ func main() {
 		T = append(T, t)
 		for x, _ := range m {
 			if m[x] == 'S' {
-				S[0].x, S[0].y = x, y
 				m[x] = 'a'
 			}
 			if m[x] == 'E' {
@@ -43,74 +42,87 @@ func main() {
 		y++
 	}
 
-	step := 1
-	done := false
-	for step = 1; step < 1000000000; step++ {
-		s := make([]pos, len(S))
-		for i, v := range S {
-			s[i] = v
-		}
-		S = []pos{}
+	result := 505 // initialize with result from puzzle 1
+	for Y, _ := range M {
+		for X, _ := range M[Y] {
+			if M[Y][X] == 'a' {
+				for y, _ := range T {
+					for x, _ := range T[y] {
+						T[y][x] = 0
+					}
+				}
+				S = []pos{{x: X, y: Y}}
+				step := 1
+				done := false
+				for step = 1; step < 505; step++ {
+					s := make([]pos, len(S))
+					for i, v := range S {
+						s[i] = v
+					}
+					S = []pos{}
 
-		for i, _ := range s {
-			m := M[s[i].y][s[i].x]
-			// left
-			y := s[i].y
-			x := s[i].x - 1
-			if x > -1 {
-				if x == E.x && E.y == y {
-					done = true
-					break
+					for i, _ := range s {
+						m := M[s[i].y][s[i].x]
+						// left
+						y := s[i].y
+						x := s[i].x - 1
+						if x > -1 {
+							if x == E.x && E.y == y {
+								done = true
+								break
+							}
+							if (M[y][x] == m || M[y][x] == m+1 || M[y][x] < m) && T[y][x] < 1 {
+								S = append(S, pos{y: y, x: x})
+								T[y][x] = step
+							}
+						}
+						// right
+						x = s[i].x + 1
+						if x < len(M[0]) {
+							if x == E.x && E.y == y {
+								done = true
+								break
+							}
+							if (M[y][x] == m || M[y][x] == m+1 || M[y][x] < m) && T[y][x] < 1 {
+								S = append(S, pos{y: y, x: x})
+								T[y][x] = step
+							}
+						}
+						// up
+						x = s[i].x
+						y = s[i].y - 1
+						if y > -1 {
+							if x == E.x && E.y == y {
+								done = true
+								break
+							}
+							if (M[y][x] == m || M[y][x] == m+1 || M[y][x] < m) && T[y][x] < 1 {
+								S = append(S, pos{y: y, x: x})
+								T[y][x] = step
+							}
+						}
+						// down
+						y = s[i].y + 1
+						if y < len(M) {
+							if x == E.x && E.y == y {
+								done = true
+								break
+							}
+							if (M[y][x] == m || M[y][x] == m+1 || M[y][x] < m) && T[y][x] < 1 {
+								S = append(S, pos{y: y, x: x})
+								T[y][x] = step
+							}
+						}
+					}
+					if done {
+						break
+					}
 				}
-				if (M[y][x] == m || M[y][x] == m+1 || M[y][x] < m) && T[y][x] < 1 {
-					S = append(S, pos{y: y, x: x})
-					T[y][x] = step
-				}
-			}
-			// right
-			x = s[i].x + 1
-			if x < len(M[0]) {
-				if x == E.x && E.y == y {
-					done = true
-					break
-				}
-				if (M[y][x] == m || M[y][x] == m+1 || M[y][x] < m) && T[y][x] < 1 {
-					S = append(S, pos{y: y, x: x})
-					T[y][x] = step
-				}
-			}
-			// up
-			x = s[i].x
-			y = s[i].y - 1
-			if y > -1 {
-				if x == E.x && E.y == y {
-					done = true
-					break
-				}
-				if (M[y][x] == m || M[y][x] == m+1 || M[y][x] < m) && T[y][x] < 1 {
-					S = append(S, pos{y: y, x: x})
-					T[y][x] = step
-				}
-			}
-			// down
-			y = s[i].y + 1
-			if y < len(M) {
-				if x == E.x && E.y == y {
-					done = true
-					break
-				}
-				if (M[y][x] == m || M[y][x] == m+1 || M[y][x] < m) && T[y][x] < 1 {
-					S = append(S, pos{y: y, x: x})
-					T[y][x] = step
+				if step < result {
+					result = step
 				}
 			}
 		}
-		if done {
-			break
-		}
 	}
-	if step == 1000000000 {
-		panic("need more iterations")
-	}
-	fmt.Println(step)
+	fmt.Println(result)
 }
