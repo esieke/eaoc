@@ -129,7 +129,7 @@ func (m *Map) Simulate(pos Pos) int {
 		for true {
 			var s int
 			p, s = m.Step(p)
-			if s == 3 {
+			if p.x == 500 && p.y == 0 {
 				return ret
 			}
 			if s == 0 {
@@ -137,7 +137,7 @@ func (m *Map) Simulate(pos Pos) int {
 			}
 		}
 		//fmt.Println("step ", ret-1)
-		//m.Print()
+		// m.Print()
 	}
 	return ret
 }
@@ -167,6 +167,13 @@ func (m *Map) Step(pos Pos) (Pos, int) {
 	return pos, 0 // stable position
 }
 
+func (m *Map) FillGround() {
+	for i, _ := range m.t[len(m.t)-1] {
+		m.t[m.max.y+2][i] = '#'
+	}
+	m.max.y = m.max.y + 2
+}
+
 func main() {
 	input, err := os.Open("input")
 	if err != nil {
@@ -191,10 +198,8 @@ func main() {
 			}
 		}
 	}
-	m.SearchAbyss()
-	//m.Print()
+	m.FillGround()
 	r := m.Simulate(Pos{y: 0, x: 500})
-	fmt.Println(" ---------------- ")
-	m.Print()
-	fmt.Println(r - 1)
+	// m.Print()
+	fmt.Println(r)
 }
